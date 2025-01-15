@@ -1,0 +1,30 @@
+{
+    "name": "7-zete-7/reactphp-audiosocket",
+    "description": "Streaming, event-driven and stream access to the Asterisk AudioSocket, built on top of ReactPHP.",
+    "keywords": ["Asterisk AudioSocket", "AudioSocket", "async", "ReactPHP"],
+    "homepage": "https://github.com/7-zete-7/reactphp-audiosocket",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Stanislau Kviatkouski",
+            "email": "7zete7@gmail.com"
+        }
+    ],
+    "require": {
+        "php": ">=8.3",
+        "evenement/evenement": "^3.0",
+        "react/event-loop": "^1.0",
+        "react/promise": "^3.0",
+        "react/socket": "^1.0",
+        "react/stream": "^1.0",
+        "symfony/uid": "^7.0 || ^6.4 || ^5.4"
+    },
+    "autoload": {
+        "psr-4": {
+            "Zete7\\React\\AudioSocket\\": "src/"
+        }
+    },
+    "config": {
+        "sort-packages": true
+    }
+}
