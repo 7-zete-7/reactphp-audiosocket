@@ -117,6 +117,7 @@ final class SendSlinStream extends EventEmitter implements WritableStreamInterfa
         }
 
         Loop::cancelTimer($this->timer);
+        $this->timer = null;
     }
 
     private function onTimer(): void
