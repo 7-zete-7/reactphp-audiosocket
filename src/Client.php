@@ -74,7 +74,7 @@ class Client extends EventEmitter
         $this->ending = true;
         $this->stream->pause();
 
-        if (!$this->send(Message::createHangupMessage())) {
+        if (!$this->stream->write(Message::createHangupMessage()->getRaw())) {
             $this->emit('error', [new \RuntimeException('Failed to send hangup message')]);
         }
     }
