@@ -19,9 +19,17 @@
         "react/stream": "^1.0",
         "symfony/uid": "^7.0 || ^6.4 || ^5.4"
     },
+    "require-dev": {
+        "phpunit/phpunit": "^12.2"
+    },
     "autoload": {
         "psr-4": {
             "Zete7\\React\\AudioSocket\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Zete7\\React\\AudioSocket\\Test\\": "tests/"
         }
     },
     "config": {

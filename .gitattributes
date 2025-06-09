@@ -2,11 +2,14 @@
 
 *.md  text eol=lf
 *.php text eol=lf
+*.xml text eol=lf
 
 *.slin binary
 
-.editorconfig  export-ignore
-.gitattributes export-ignore
-.gitignore     export-ignore
-examples/      export-ignore
-Dockerfile     export-ignore
+.editorconfig    export-ignore
+.gitattributes   export-ignore
+.gitignore       export-ignore
+examples/        export-ignore
+tests/           export-ignore
+Dockerfile       export-ignore
+phpunit.dist.xml export-ignore
