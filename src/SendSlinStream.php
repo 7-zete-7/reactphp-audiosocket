@@ -149,7 +149,8 @@ final class SendSlinStream extends EventEmitter implements WritableStreamInterfa
 
             // buffer is end()ing and now completely empty => close buffer
             if (!$this->writable) {
-                $this->stream->end();
+                // the stream can be null because of "drain" event emitting
+                $this->stream?->end();
             }
         }
     }
