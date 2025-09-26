@@ -69,6 +69,10 @@ final class SendSlinStream extends EventEmitter implements WritableStreamInterfa
 
     public function end($data = null): void
     {
+        if (null === $this->stream) {
+            return;
+        }
+
         if (null !== $data) {
             $this->write($data);
         }
