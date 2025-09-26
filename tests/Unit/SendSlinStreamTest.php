@@ -54,6 +54,25 @@ final class SendSlinStreamTest extends TestCase
         $stream->close();
     }
 
+    #[PHPUnit\Test]
+    #[PHPUnit\Ticket('https://github.com/7-zete-7/reactphp-audiosocket/issues/7')]
+    public function testStreamEndAfterClose(): void
+    {
+        $client = $this->createStub(Client::class);
+
+        $stream = new SendSlinStream(
+            stream: $client,
+            chunkDuration: 0.001, // 16B per chunk
+            softLimit: 16, // 16B
+        );
+
+        $stream->close();
+
+        $this->assertFalse($stream->isWritable());
+
+        $stream->end(); // Error: Call to a member function end() on null
+    }
+
     private function delayRejection(float $seconds, \Throwable $reason): PromiseInterface
     {
         $deferred = new Deferred();
