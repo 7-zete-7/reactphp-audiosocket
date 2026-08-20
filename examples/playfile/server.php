@@ -2,49 +2,77 @@
 
 declare(strict_types=1);
 
-use React\EventLoop\Loop;
-use React\Socket\ConnectionInterface;
-use React\Socket\TcpServer;
-use React\Stream\CompositeStream;
+use React\Socket\SocketServer;
 use React\Stream\ReadableResourceStream;
 use React\Stream\WritableResourceStream;
-use Symfony\Component\Uid\Uuid;
-use Zete7\React\AudioSocket\Client;
-use Zete7\React\AudioSocket\ReceiveSlinStream;
-use Zete7\React\AudioSocket\SendSlinStream;
+use Zete7\AudioSocket\Protocol\AudioFormat;
+use Zete7\AudioSocket\Protocol\DtmfSignal;
+use Zete7\React\AudioSocket\AudioStream\DuplexAudioStream;
+use Zete7\React\AudioSocket\ConnectionInterface;
+use Zete7\React\AudioSocket\Server;
 
 require dirname(__DIR__, 2).'/vendor/autoload.php';
 
-$server = new TcpServer('0.0.0.0:8080');
+$server = new Server(new SocketServer('tcp://127.0.0.1:9092', [
+    'tcp' => [
+        'tcp_nodelay' => true,
+    ],
+]));
 
 $server->on('connection', static function (ConnectionInterface $connection): void {
     $remoteAddress = $connection->getRemoteAddress();
-    printf("+ %s connected\n", $remoteAddress);
+    printf("+ %s connected with UUID %s\n", $remoteAddress, $connection->getUuid()->toRfc4122());
 
     $connection->on('close', static function () use ($remoteAddress) {
         printf("- %s disconnected\n", $remoteAddress);
     });
 
-    $client = new Client($connection);
-
-    $slinStream = new CompositeStream(new ReceiveSlinStream($client), new SendSlinStream($client));
-
-    $client->getId()->then(static function (Uuid $id) use ($slinStream, $remoteAddress): void {
-        printf("  %s calls ID %s\n", $remoteAddress, $id->toRfc4122());
-
-        $receivedSlinFileName = \sprintf('%s.slin', $id->toRfc4122());
-        $receivedSlinFileStream = new WritableResourceStream(\fopen(__DIR__.'/'.$receivedSlinFileName, 'wb'));
-
-        $slinStream->pipe($receivedSlinFileStream, ['end' => true]);
-
-        Loop::addTimer(3, static function () use ($slinStream): void {
-            $sendSlinFileStream = new ReadableResourceStream(\fopen(__DIR__.'/test.slin', 'rb'));
-
-            $sendSlinFileStream->pipe($slinStream, ['end' => true]);
-        });
-    }, static function (\Throwable $e) use ($remoteAddress): void {
-        printf("  %s failed to get ID: %s\n", $remoteAddress, $e->getMessage());
+    $connection->on('error', static function (Throwable $error) use ($remoteAddress) {
+        printf("  %s connection error: %s\n", $remoteAddress, $error->getMessage());
     });
+
+    $connection->on('dtmf', static function (DtmfSignal $signal): void {
+        printf("  dtmf signal \"%s\"\n", $signal->value);
+    });
+
+    $sourceResource = fopen(__DIR__.'/test.slin', 'r');
+    assert(false !== $sourceResource);
+    $sourceStream = new ReadableResourceStream($sourceResource, readChunkSize: AudioFormat::Slin->getChunkSize());
+    $sourceStream->on('end', static function (): void {
+        printf("  source stream ended\n");
+    });
+    $sourceStream->on('error', static function (Throwable $error): void {
+        printf("  source stream error: %s\n", $error->getMessage());
+    });
+    $sourceStream->on('close', static function (): void {
+        printf("  source stream closed\n");
+    });
+
+    $audioStream = new DuplexAudioStream($connection, AudioFormat::Slin);
+    $audioStream->on('end', static function (): void {
+        printf("  audio stream ended\n");
+    });
+    $audioStream->on('error', static function (Throwable $error): void {
+        printf("  audio stream error: %s\n", $error->getMessage());
+    });
+    $audioStream->on('close', static function (): void {
+        printf("  audio stream closed\n");
+    });
+
+    $destinationFileName = sprintf('%s.slin', $connection->getUuid()->toRfc4122());
+    $destinationResource = fopen(__DIR__.'/'.$destinationFileName, 'w');
+    assert(false !== $destinationResource);
+    $destinationStream = new WritableResourceStream($destinationResource);
+    $destinationStream->on('close', static function (): void {
+        printf("  destination stream closed\n");
+    });
+
+    $audioStream->on('close', static fn () => $destinationStream->end());
+
+    $sourceStream
+        ->pipe($audioStream, ['end' => true])
+        ->pipe($destinationStream, ['end' => true])
+    ;
 });
 
 $server->on('error', static function (Throwable $e) {

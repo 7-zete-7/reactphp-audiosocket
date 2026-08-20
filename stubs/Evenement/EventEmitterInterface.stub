@@ -1,0 +1,61 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Evenement;
+
+interface EventEmitterInterface
+{
+    /**
+     * @param string $event
+     *
+     * @param-later-invoked-callable $listener
+     *
+     * @return $this
+     */
+    public function on($event, callable $listener);
+
+    /**
+     * @param string $event
+     *
+     * @param-later-invoked-callable $listener
+     *
+     * @return $this
+     */
+    public function once($event, callable $listener);
+
+    /**
+     * @param string $event
+     *
+     * @param-later-invoked-callable $listener
+     *
+     * @return void
+     */
+    public function removeListener($event, callable $listener);
+
+    /**
+     * @param string|null $event
+     *
+     * @return void
+     */
+    public function removeAllListeners($event = null);
+
+    /**
+     * @pure
+     *
+     * @param string|null $event
+     *
+     * @return ($event is null ? array<string, list<callable>> : list<callable>)
+     */
+    public function listeners($event = null);
+
+    /**
+     * @impure
+     *
+     * @param string      $event
+     * @param list<mixed> $arguments
+     *
+     * @return void
+     */
+    public function emit($event, array $arguments = []);
+}

@@ -1,0 +1,48 @@
+<?php
+
+namespace React\Stream;
+
+use Evenement\EventEmitterInterface;
+
+interface ReadableStreamInterface extends EventEmitterInterface
+{
+    /**
+     * @pure
+     *
+     * @return bool
+     */
+    public function isReadable();
+
+    /**
+     * @impure
+     *
+     * @return void
+     */
+    public function pause();
+
+    /**
+     * @impure
+     *
+     * @return void
+     */
+    public function resume();
+
+    /**
+     * @impure
+     *
+     * @template TDest of WritableStreamInterface
+     *
+     * @param TDest                $dest
+     * @param array<string, mixed> $options
+     *
+     * @return TDest
+     */
+    public function pipe(WritableStreamInterface $dest, array $options = []);
+
+    /**
+     * @impure
+     *
+     * @return void
+     */
+    public function close();
+}
