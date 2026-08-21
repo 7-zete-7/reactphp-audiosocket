@@ -2,33 +2,71 @@
 
 declare(strict_types=1);
 
-use React\Socket\ConnectionInterface;
+use React\EventLoop\Loop;
 use React\Socket\TcpConnector;
 use React\Stream\WritableResourceStream;
 use Symfony\Component\Uid\Uuid;
-use Zete7\React\AudioSocket\Client;
-use Zete7\React\AudioSocket\Protocol\Message;
-use Zete7\React\AudioSocket\ReceiveSlinStream;
+use Zete7\AudioSocket\Protocol\AudioFormat;
+use Zete7\AudioSocket\Protocol\DtmfSignal;
+use Zete7\React\AudioSocket\AudioStream\AudioStreamInterface;
+use Zete7\React\AudioSocket\AudioStream\ReadableAudioStream;
+use Zete7\React\AudioSocket\ClientConnection;
+
+use function React\Async\await;
 
 require dirname(__DIR__, 2).'/vendor/autoload.php';
 
-$connector = new TcpConnector();
+$connector = new TcpConnector(context: [
+    'tcp' => [
+        'tcp_nodelay' => true,
+    ],
+]);
 
-$connector->connect('tcp://127.0.0.1:8080')->then(static function (ConnectionInterface $connection): void {
-    $id = Uuid::v7();
-    $client = new Client($connection);
+$uuid = Uuid::v7();
 
-    if (!$client->send(Message::createIdMessage($id))) {
-        printf("c   Failed to send ID message\n");
-        $connection->close();
+printf("Connecting to tcp://127.0.0.1:9092 with UUID %s\n", $uuid->toRfc4122());
 
-        return;
-    }
+$connection = await($connector->connect('tcp://127.0.0.1:9092'));
+$client = new ClientConnection($connection, $uuid);
 
-    $reader = new ReceiveSlinStream($client);
-    $writer = new WritableResourceStream(\fopen(__DIR__.'/client_result.slin', 'wb'));
+printf("+ connected\n");
 
-    $reader->pipe($writer, ['end' => true]);
-
-    $client->send(Message::createSilenceMessage());
+$client->on('close', static function (): void {
+    printf("- disconnected\n");
 });
+$client->on('hangup', static function (): void {
+    printf("  connection hangup\n");
+});
+
+$audioStream = new ReadableAudioStream($client, AudioFormat::Slin);
+$audioStream->on('end', static function (): void {
+    printf("  audio stream ended\n");
+});
+$audioStream->on('error', static function (Throwable $error): void {
+    printf("  audio stream error: %s\n", $error->getMessage());
+});
+$audioStream->on('close', static function (): void {
+    printf("  audio stream closed\n");
+});
+
+$destinationResource = fopen(__DIR__.'/client_result.slin', 'w');
+assert(false !== $destinationResource);
+$destinationStream = new WritableResourceStream($destinationResource);
+$destinationStream->on('error', static function (Throwable $error): void {
+    printf("  destination stream error: %s\n", $error->getMessage());
+});
+$destinationStream->on('close', static function (): void {
+    printf("  destination stream closed\n");
+});
+
+$audioStream
+    ->pipe($destinationStream, ['end' => true])
+;
+
+$silenceSendingTimer = Loop::addPeriodicTimer(AudioStreamInterface::CHUNK_DURATION, static function () use ($client): void {
+    $client->sendAudio(AudioFormat::Slin, str_repeat("\0", AudioFormat::Slin->getChunkSize()));
+});
+$client->on('close', static fn () => Loop::cancelTimer($silenceSendingTimer));
+
+Loop::addTimer(2, static fn () => $client->sendDtmf(DtmfSignal::Star));
+Loop::addTimer(3, static fn () => $client->sendDtmf(DtmfSignal::Square));

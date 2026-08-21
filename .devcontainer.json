@@ -1,0 +1,15 @@
+{
+  "dockerComposeFile": [
+    "compose.yaml",
+  ],
+  "service": "php",
+  "workspaceFolder": "/workspace",
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "bmewburn.vscode-intelephense-client",
+        "xdebug.php-debug"
+      ]
+    }
+  }
+}

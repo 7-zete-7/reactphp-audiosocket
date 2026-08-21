@@ -1,0 +1,31 @@
+<?php
+
+namespace React\Stream;
+
+use Evenement\EventEmitterInterface;
+
+final class Util
+{
+    /**
+     * @template TDest of WritableStreamInterface
+     *
+     * @param TDest                $dest
+     * @param array<string, mixed> $options
+     *
+     * @return TDest
+     */
+    public static function pipe(ReadableStreamInterface $source, WritableStreamInterface $dest, array $options = [])
+    {
+    }
+
+    /**
+     * @param EventEmitterInterface $source
+     * @param EventEmitterInterface $target
+     * @param list<string>          $events
+     *
+     * @return void
+     */
+    public static function forwardEvents($source, $target, array $events)
+    {
+    }
+}

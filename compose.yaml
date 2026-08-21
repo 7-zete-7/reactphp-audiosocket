@@ -1,0 +1,15 @@
+---
+# $schema: https://raw.githubusercontent.com/compose-spec/compose-spec/refs/heads/main/schema/compose-spec.json
+
+services:
+  php:
+    build:
+      context: .
+    environment:
+      XDEBUG_MODE: "${XDEBUG_MODE:-develop,debug}"
+      XDEBUG_CONFIG: "client_host=127.0.0.1 start_with_request=yes"
+    volumes:
+      - .:/workspace
+    extra_hosts:
+      - host.docker.internal:host-gateway
+    tty: true

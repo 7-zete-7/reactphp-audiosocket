@@ -1,15 +1,10 @@
 * text=auto eol=lf
 
-*.md  text eol=lf
-*.php text eol=lf
-*.xml text eol=lf
+*.php diff=php
 
-*.slin binary
-
-.editorconfig    export-ignore
-.gitattributes   export-ignore
-.gitignore       export-ignore
-examples/        export-ignore
-tests/           export-ignore
-Dockerfile       export-ignore
-phpunit.dist.xml export-ignore
+* export-ignore
+/src/ -export-ignore
+/src/** -export-ignore
+composer.json -export-ignore
+LICENSE -export-ignore
+README.md -export-ignore

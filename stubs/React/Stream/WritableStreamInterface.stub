@@ -1,0 +1,40 @@
+<?php
+
+namespace React\Stream;
+
+use Evenement\EventEmitterInterface;
+
+interface WritableStreamInterface extends EventEmitterInterface
+{
+    /**
+     * @pure
+     *
+     * @return bool
+     */
+    public function isWritable();
+
+    /**
+     * @impure
+     *
+     * @param mixed|string $data
+     *
+     * @return bool
+     */
+    public function write($data);
+
+    /**
+     * @impure
+     *
+     * @param mixed|string|null $data
+     *
+     * @return void
+     */
+    public function end($data = null);
+
+    /**
+     * @impure
+     *
+     * @return void
+     */
+    public function close();
+}
